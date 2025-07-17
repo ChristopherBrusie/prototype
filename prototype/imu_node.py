@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Imu
+from nav_msgs.msg import Odometry 
 import smbus
 import time
 import math
@@ -19,8 +20,8 @@ class IMUNode(Node):
         super().__init__('imu_node')
         self.get_logger().info('IMU Node has been started.')
 
-        self.imu_pub = self.create_publisher(Imu, 'imu/data', 10)
-        self.timer = self.create_timer(0.05, self.publish_imu_data)  # 20hz
+        self.imu_pub = self.create_publisher(Imu, 'imu/data_raw', 10)
+        self.timer = self.create_timer(0.05, self.publish_imu_data)  # 20hz imu message
 
         # Initialize I2C bus
         self.bus = smbus.SMBus(1)
@@ -37,6 +38,8 @@ class IMUNode(Node):
         if value > 32768:
             value -= 65536
         return value
+
+
 
     def publish_imu_data(self):
         imu_msg = Imu()
@@ -68,17 +71,20 @@ class IMUNode(Node):
         imu_msg.orientation_covariance[0] = -1.0  # Marks orientation as not available
         imu_msg.linear_acceleration_covariance = [0.04, 0, 0, 0, 0.04, 0, 0, 0, 0.04]  # tune based on noise
         imu_msg.angular_velocity_covariance = [0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02]
-
-
-
-
-
         imu_msg.header.stamp = self.get_clock().now().to_msg()
         imu_msg.header.frame_id = 'imu_link'  # Or whatever frame your URDF defines
-
-        
         # Publish the IMU message
         self.imu_pub.publish(imu_msg)
+
+
+        # send odometry data
+        odom_msg = Odometry()
+        
+
+        odom_msg.header.stamp = self.get_clock().now().to_msg()
+        odom_msg.header.frame_id = 'odom'
+
+
 
 def main(args=None):
     rclpy.init(args=args)

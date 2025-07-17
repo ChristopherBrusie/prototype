@@ -7,7 +7,7 @@ def generate_launch_description():
     main_nodes = [
         # motor driver
         Node(
-            package='robocar',
+            package='prototype',
             executable='motor_driver_node',
             name='motor_driver_node',
             output='screen',
@@ -16,29 +16,27 @@ def generate_launch_description():
 
         # IMU node
         Node(
-            package='robocar',
+            package='prototype',
             executable='imu_node',
             name='imu_node',
             output='screen',
             parameters=[{'use_sim_time': False}]
         ),
 
-        # teleop node
+        # IMU Madgwick filter
         Node(
-            package='robocar', 
-            executable='teleop_twist_keyboard', 
-            name='teleop_twist_keyboard',
+            package='imu_filter_madgwick',
+            executable='imu_filter_madgwick_node',
+            name='madgwick_filter',
             output='screen',
-            parameters=[{'use_sim_time': False}],
-        ),
-
-        # statis tf publisher
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='static_tf_publisher',
-            arguments=['0', '0', '0.1', '0', '0', '0', 'base_link', 'imu_link'],
-            output='screen'
+            parameters=[{'use_sim_time': False},
+                        {'use_mag': False},
+                        {'gain': 0.1},
+                        {'remove_gravity_vector': True},
+                        ],
+            remappings=[
+                ('/imu/data', '/imu/filtered')
+            ]
         )
     ]
 
