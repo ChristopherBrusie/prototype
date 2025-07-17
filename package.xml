@@ -10,6 +10,7 @@
   <exec_depend>rclpy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>imu_tools</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>tf2_geometry_msgs</exec_depend>
@@ -17,7 +18,7 @@
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>slam_toolbox</exec_depend>
   <exec_depend>python3-numpy</exec_depend>
-  <exec_depend>python3-pyserial</exec_depend>
+  <exec_depend>python3-serial</exec_depend>
   <exec_depend>python3-smbus</exec_depend>
 
 
