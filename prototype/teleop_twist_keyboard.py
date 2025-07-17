@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 import rclpy
-from rclpy.qos import qos_profile_default
-
+from rclpy.qos import QoSProfile
 from geometry_msgs.msg import Twist
-
 import sys, select, termios, tty
+import threading
+import time
 
 settings = termios.tcgetattr(sys.stdin)
 
 msg = """
-Reading from the keyboard  and Publishing to Twist!
+Reading from the keyboard and Publishing to Twist at 10Hz!
 ---------------------------
 Moving around:
    u    i    o
@@ -35,102 +35,175 @@ CTRL-C to quit
 """
 
 moveBindings = {
-		'i':(1,0,0,0),
-		'o':(1,0,0,-1),
-		'j':(0,0,0,1),
-		'l':(0,0,0,-1),
-		'u':(1,0,0,1),
-		',':(-1,0,0,0),
-		'.':(-1,0,0,1),
-		'm':(-1,0,0,-1),
-		'O':(1,-1,0,0),
-		'I':(1,0,0,0),
-		'J':(0,1,0,0),
-		'L':(0,-1,0,0),
-		'U':(1,1,0,0),
-		'<':(-1,0,0,0),
-		'>':(-1,-1,0,0),
-		'M':(-1,1,0,0),
-		't':(0,0,1,0),
-		'b':(0,0,-1,0),
-	       }
+    'i': (1, 0, 0, 0),
+    'o': (1, 0, 0, -1),
+    'j': (0, 0, 0, 1),
+    'l': (0, 0, 0, -1),
+    'u': (1, 0, 0, 1),
+    ',': (-1, 0, 0, 0),
+    '.': (-1, 0, 0, 1),
+    'm': (-1, 0, 0, -1),
+    'O': (1, -1, 0, 0),
+    'I': (1, 0, 0, 0),
+    'J': (0, 1, 0, 0),
+    'L': (0, -1, 0, 0),
+    'U': (1, 1, 0, 0),
+    '<': (-1, 0, 0, 0),
+    '>': (-1, -1, 0, 0),
+    'M': (-1, 1, 0, 0),
+    't': (0, 0, 1, 0),
+    'b': (0, 0, -1, 0),
+}
 
-speedBindings={
-		'q':(1.1,1.1),
-		'z':(.9,.9),
-		'w':(1.1,1),
-		'x':(.9,1),
-		'e':(1,1.1),
-		'c':(1,.9),
-	      }
+speedBindings = {
+    'q': (1.1, 1.1),
+    'z': (.9, .9),
+    'w': (1.1, 1),
+    'x': (.9, 1),
+    'e': (1, 1.1),
+    'c': (1, .9),
+}
 
-def getKey():
-	tty.setraw(sys.stdin.fileno())
-	select.select([sys.stdin], [], [], 0)
-	key = sys.stdin.read(1)
-	termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
-	return key
+class TeleopTwistKeyboard:
+    def __init__(self):
+        self.speed = 0.25
+        self.turn = 1.0
+        self.x = 0
+        self.y = 0
+        self.z = 0
+        self.th = 0
+        self.status = 0
+        self.running = True
+        self.lock = threading.Lock()
 
+    def getKey(self):
+        tty.setraw(sys.stdin.fileno())
+        # Non-blocking read with timeout
+        if select.select([sys.stdin], [], [], 0.01)[0]:
+            key = sys.stdin.read(1)
+        else:
+            key = ''
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
+        return key
 
-def vels(speed,turn):
-	return "currently:\tspeed %s\tturn %s " % (speed,turn)
+    def vels(self):
+        return "currently:\tspeed %s\tturn %s " % (self.speed, self.turn)
 
-def main(args=None):	
-	if args is None:
-		args = sys.argv
+    def keyboard_thread(self):
+        """Thread function to handle keyboard input"""
+        while self.running:
+            key = self.getKey()
+            
+            if key == '':
+                continue
+                
+            with self.lock:
+                if key in moveBindings.keys():
+                    self.x = moveBindings[key][0]
+                    self.y = moveBindings[key][1]
+                    self.z = moveBindings[key][2]
+                    self.th = moveBindings[key][3]
+                elif key in speedBindings.keys():
+                    self.speed = self.speed * speedBindings[key][0]
+                    self.turn = self.turn * speedBindings[key][1]
+                    print(self.vels())
+                    if (self.status == 14):
+                        print(msg)
+                    self.status = (self.status + 1) % 15
+                else:
+                    # Stop on any other key
+                    self.x = 0
+                    self.y = 0
+                    self.z = 0
+                    self.th = 0
+                    if (key == '\x03'):  # Ctrl+C
+                        self.running = False
+                        break
 
-	rclpy.init(args)
-	node = rclpy.create_node('teleop_twist_keyboard')
-		
-	pub = node.create_publisher(Twist, 'cmd_vel', 	qos_profile_default)
+    def publish_thread(self, publisher):
+        """Thread function to publish at 10Hz"""
+        rate = 10.0  # Hz
+        dt = 1.0 / rate
+        
+        while self.running:
+            start_time = time.time()
+            
+            # Get current state safely
+            with self.lock:
+                current_x = self.x
+                current_y = self.y
+                current_z = self.z
+                current_th = self.th
+                current_speed = self.speed
+                current_turn = self.turn
+            
+            # Create and publish twist message
+            twist = Twist()
+            twist.linear.x = current_x * current_speed
+            twist.linear.y = current_y * current_speed
+            twist.linear.z = current_z * current_speed
+            twist.angular.x = 0.0
+            twist.angular.y = 0.0
+            twist.angular.z = current_th * current_turn
+            
+            publisher.publish(twist)
+            
+            # Maintain 10Hz rate
+            elapsed = time.time() - start_time
+            sleep_time = max(0, dt - elapsed)
+            time.sleep(sleep_time)
 
-	speed = 0.5
-	turn = 1.0
-	x = 0
-	y = 0
-	z = 0
-	th = 0
-	status = 0
+def main(args=None):
+    if args is None:
+        args = sys.argv
 
-	try:
-		print(msg)
-		print(vels(speed,turn))
-		while(1):
-			key = getKey()
-			if key in moveBindings.keys():
-				x = moveBindings[key][0]
-				y = moveBindings[key][1]
-				z = moveBindings[key][2]
-				th = moveBindings[key][3]
-			elif key in speedBindings.keys():
-				speed = speed * speedBindings[key][0]
-				turn = turn * speedBindings[key][1]
+    rclpy.init(args=args)
+    node = rclpy.create_node('teleop_twist_keyboard')
+    
+    pub = node.create_publisher(Twist, 'cmd_vel', QoSProfile(depth=10))
+    
+    teleop = TeleopTwistKeyboard()
+    
+    try:
+        print(msg)
+        print(teleop.vels())
+        
+        # Start keyboard input thread
+        keyboard_thread = threading.Thread(target=teleop.keyboard_thread)
+        keyboard_thread.daemon = True
+        keyboard_thread.start()
+        
+        # Start publishing thread
+        publish_thread = threading.Thread(target=teleop.publish_thread, args=(pub,))
+        publish_thread.daemon = True
+        publish_thread.start()
+        
+        # Keep main thread alive and handle ROS2 spinning
+        while teleop.running:
+            rclpy.spin_once(node, timeout_sec=0.1)
+            
+    except KeyboardInterrupt:
+        teleop.running = False
+        
+    except Exception as e:
+        print(e)
+        teleop.running = False
 
-				print(vels(speed,turn))
-				if (status == 14):
-					print(msg)
-				status = (status + 1) % 15
-			else:
-				x = 0
-				y = 0
-				z = 0
-				th = 0
-				if (key == '\x03'):
-					break
+    finally:
+        # Send stop command
+        twist = Twist()
+        twist.linear.x = 0.0
+        twist.linear.y = 0.0
+        twist.linear.z = 0.0
+        twist.angular.x = 0.0
+        twist.angular.y = 0.0
+        twist.angular.z = 0.0
+        pub.publish(twist)
+        
+        # Clean up
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
+        node.destroy_node()
+        rclpy.shutdown()
 
-			twist = Twist()
-			twist.linear.x = x*speed; twist.linear.y = y*speed; twist.linear.z = z*speed;
-			twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = th*turn
-			pub.publish(twist)
-
-	except:
-		print(Exception)
-
-	finally:
-		twist = Twist()
-		twist.linear.x = 0.0; twist.linear.y = 0.0; twist.linear.z = 0.0
-		twist.angular.x = 0.0; twist.angular.y = 0.0; twist.angular.z = 0.0
-		pub.publish(twist)
-
-		termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
-
+if __name__ == '__main__':
+    main()
