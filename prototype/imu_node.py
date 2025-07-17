@@ -1,10 +1,8 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Imu
-from nav_msgs.msg import Odometry 
+
 import smbus
-import time
-import math
 
 # Registers
 MPU6050_ADDR = 0x68
@@ -21,7 +19,8 @@ class IMUNode(Node):
         self.get_logger().info('IMU Node has been started.')
 
         self.imu_pub = self.create_publisher(Imu, 'imu/data_raw', 10)
-        self.timer = self.create_timer(0.05, self.publish_imu_data)  # 20hz imu message
+
+        self.timer = self.create_timer(0.02, self.publish_imu_data)  # 50hz imu message
 
         # Initialize I2C bus
         self.bus = smbus.SMBus(1)
@@ -77,12 +76,6 @@ class IMUNode(Node):
         self.imu_pub.publish(imu_msg)
 
 
-        # send odometry data
-        odom_msg = Odometry()
-        
-
-        odom_msg.header.stamp = self.get_clock().now().to_msg()
-        odom_msg.header.frame_id = 'odom'
 
 
 

@@ -28,7 +28,7 @@ class MotorDriverNode(Node):
         time.sleep(2)  # Wait for ESP32 to reset
 
         # wheel stuff
-        self.rpm_factor = 60 / (math.pi * 0.06) # wheel diameter 0.06m
+        self.rpm_factor = 60 / (math.pi * 0.08) # wheel diameter 0.08m
         self.L = 20 #distance from center to wheel in X (half robot width)
         self.W = 20 #distance from center to wheel in Y (half robot length)
         self.L_W = self.L + self.W

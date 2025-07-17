@@ -37,6 +37,19 @@ def generate_launch_description():
             remappings=[
                 ('/imu/data', '/imu/filtered')
             ]
+        ), 
+
+        # EKF Node
+        Node(
+            package='robot_localization',
+            executable='ekf_node',
+            name='ekf_filter_node',
+            output='screen',
+            parameters=[os.path.join(os.path.dirname(__file__), 'ekf_config.yaml')],
+            remappings=[
+                ('/imu/data', '/raw_imu'),
+                ('/wheel_encoder_velocity', '/wheel_odometry')
+            ]
         )
     ]
 
