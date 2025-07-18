@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist, TwistStamped
+from geometry_msgs.msg import Twist, TwistWithCovarianceStamped
 
 
 import serial
@@ -15,7 +15,7 @@ class MotorDriverNode(Node):
         self.get_logger().info('Motor Driver Node has been started.')
 
         self.subscriber = self.create_subscription(Twist, 'cmd_vel', self.cmd_vel_callback, 10)
-        self.odom_pub = self.create_publisher(Twist, 'wheel_odometry', 10)
+        self.odom_pub = self.create_publisher(TwistWithCovarianceStamped, 'wheel_odometry', 10)
 
 
         try:
@@ -46,6 +46,16 @@ class MotorDriverNode(Node):
                         msg.linear.x = (rpms[0] + rpms[1] + rpms[2] + rpms[3]) / 4.0 / self.rpm_factor
                         msg.linear.y = (rpms[1] - rpms[0] + rpms[3] - rpms[2]) / 4.0 / self.rpm_factor
                         msg.angular.z = (rpms[2] - rpms[3] + rpms[1] - rpms[0]) / (4.0 * self.L_W) / self.rpm_factor
+                        msg.header.stamp = self.get_clock().now().to_msg()
+                        msg.header.frame_id = 'base_link'
+                        msg.covariance = [
+                            0.05, 0,    0,    0,    0,    0,    # x linear velocity
+                            0,    0.05, 0,    0,    0,    0,    # y linear velocity
+                            0,    0,    99999, 0,    0,    0,   # z (unused – robot stays on ground)
+                            0,    0,    0,    99999, 0,    0,   # rotation about x (roll)
+                            0,    0,    0,    0,    99999, 0,   # rotation about y (pitch)
+                            0,    0,    0,    0,    0,    0.02  # rotation about z (yaw)
+                        ]
                         self.odom_pub.publish(msg)
                 except ValueError as e:
                     self.get_logger().error(f"Failed to parse RPMs: {e}")

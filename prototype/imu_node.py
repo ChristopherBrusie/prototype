@@ -68,8 +68,12 @@ class IMUNode(Node):
         imu_msg.orientation.z = 0.0
         imu_msg.orientation.w = 1.0
         imu_msg.orientation_covariance[0] = -1.0  # Marks orientation as not available
-        imu_msg.linear_acceleration_covariance = [0.04, 0.0, 0.0, 0.0, 0.04, 0.0, 0.0, 0.0, 0.04]  # tune based on noise
-        imu_msg.angular_velocity_covariance = [0.02, 0.0, 0.0, 0.0, 0.02, 0.0, 0.0, 0.0, 0.02]
+        imu_msg.linear_acceleration_covariance = [0.04, 0.0, 0.0, 
+                                                  0.0, 0.04, 0.0, 
+                                                  0.0, 0.0, 0.04]  # tune based on noise
+        imu_msg.angular_velocity_covariance = [0.02, 0.0, 0.0, 
+                                               0.0, 0.02, 0.0, 
+                                               0.0, 0.0, 0.02]
         imu_msg.header.stamp = self.get_clock().now().to_msg()
         imu_msg.header.frame_id = 'imu_link'  # Or whatever frame your URDF defines
         # Publish the IMU message

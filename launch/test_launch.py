@@ -11,10 +11,19 @@ def generate_launch_description():
             package='prototype',
             executable='motor_driver_node',
             name='motor_driver_node',
-            output='screen',
+            #output='screen',
             parameters=[{'use_sim_time': False}]
         ),
 
+        # Static TF
+        Node(
+            package='prototype',
+            executable='multi_static_tf_publisher',
+            name='multi_static_tf_publisher',
+            output='screen',
+            parameters=[{'use_sim_time': False}]
+        ),
+        
         # IMU node
         Node(
             package='prototype',
@@ -30,13 +39,10 @@ def generate_launch_description():
             executable='imu_filter_madgwick_node',
             name='madgwick_filter',
             output='screen',
-            parameters=[{'use_sim_time': False},
-                        {'use_mag': False},
-                        {'remove_gravity_vector': True},
-                        {'publish_tf': False},
-                        {'gain':0.1},
-                        {'zeta: 0.0'},
-                        ],
+            parameters=[os.path.join(
+                get_package_share_directory('prototype'),
+                'launch',
+                'madgwick_config.yaml')], 
             remappings=[
                 ('/imu/data', '/imu/data_madgwick')
             ]
@@ -60,30 +66,5 @@ def generate_launch_description():
     ]
 
 
-    #static transforms
-    config_file = os.path.join(
-        get_package_share_directory('prototype'),
-        'launch',
-        'static_tf.yaml')
-
-    with open(config_file, 'r') as file:
-        config = yaml.safe_load(file)
-
-    static_tf_nodes = []
-    for tf in config['transforms']:
-        x, y, z = tf['translation']
-        roll, pitch, yaw = tf['rotation']
-        static_tf_nodes.append(
-            Node(
-                package='tf2_ros',
-                executable='static_transform_publisher',
-                name=f"static_tf_{tf['name']}",
-                arguments=[
-                    str(x), str(y), str(z),
-                    str(roll), str(pitch), str(yaw),
-                    tf['parent'], tf['child']
-                ]
-            )
-        )
-
-    return LaunchDescription(static_tf_nodes + main_nodes)
+    
+    return LaunchDescription(main_nodes)

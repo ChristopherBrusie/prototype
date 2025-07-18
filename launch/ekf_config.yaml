@@ -12,7 +12,7 @@ ekf_filter_node:
 
     imu0: /imu/data_madgwick
     imu0_config: [false, false, false, # x y z
-                  false, false, false, # r p y
+                  true, true, true, # r p y
                   false, false, false, #vx vy vz
                   true, true, true, # vroll vpitch vyaw
                   true, true, true] # ax ay az
