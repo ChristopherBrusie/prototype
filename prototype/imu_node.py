@@ -44,14 +44,14 @@ class IMUNode(Node):
         imu_msg = Imu()
         
         # Read accelerometer data
-        accel_x = self.read_raw_data(ACCEL_XOUT_H) / 16384.0
-        accel_y = self.read_raw_data(ACCEL_XOUT_H + 2) / 16384.0
-        accel_z = self.read_raw_data(ACCEL_XOUT_H + 4) / 16384.0
+        accel_x = self.read_raw_data(ACCEL_XOUT_H) / 16384.0 * 9.80665
+        accel_y = self.read_raw_data(ACCEL_XOUT_H + 2) / 16384.0 * 9.80665
+        accel_z = self.read_raw_data(ACCEL_XOUT_H + 4) / 16384.0 * 9.80665
         
         # Read gyroscope data
-        gyro_x = self.read_raw_data(GYRO_XOUT_H) / 131.0
-        gyro_y = self.read_raw_data(GYRO_XOUT_H + 2) / 131.0
-        gyro_z = self.read_raw_data(GYRO_XOUT_H + 4) / 131.0
+        gyro_x = self.read_raw_data(GYRO_XOUT_H) / 131.0 * 0.0174533
+        gyro_y = self.read_raw_data(GYRO_XOUT_H + 2) / 131.0 * 0.0174533
+        gyro_z = self.read_raw_data(GYRO_XOUT_H + 4) / 131.0 * 0.0174533
         
         # Fill IMU message
         imu_msg.linear_acceleration.x = accel_x
@@ -68,8 +68,8 @@ class IMUNode(Node):
         imu_msg.orientation.z = 0.0
         imu_msg.orientation.w = 1.0
         imu_msg.orientation_covariance[0] = -1.0  # Marks orientation as not available
-        imu_msg.linear_acceleration_covariance = [0.04, 0, 0, 0, 0.04, 0, 0, 0, 0.04]  # tune based on noise
-        imu_msg.angular_velocity_covariance = [0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02]
+        imu_msg.linear_acceleration_covariance = [0.04, 0.0, 0.0, 0.0, 0.04, 0.0, 0.0, 0.0, 0.04]  # tune based on noise
+        imu_msg.angular_velocity_covariance = [0.02, 0.0, 0.0, 0.0, 0.02, 0.0, 0.0, 0.0, 0.02]
         imu_msg.header.stamp = self.get_clock().now().to_msg()
         imu_msg.header.frame_id = 'imu_link'  # Or whatever frame your URDF defines
         # Publish the IMU message

@@ -1,5 +1,6 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from ament_index_python.packages import get_package_share_directory
 import yaml
 import os
 
@@ -35,7 +36,7 @@ def generate_launch_description():
                         {'remove_gravity_vector': True},
                         ],
             remappings=[
-                ('/imu/data', '/imu/filtered')
+                ('/imu/data', '/imu/data_madgwick')
             ]
         ), 
 
@@ -45,9 +46,12 @@ def generate_launch_description():
             executable='ekf_node',
             name='ekf_filter_node',
             output='screen',
-            parameters=[os.path.join(os.path.dirname(__file__), 'ekf_config.yaml')],
+            parameters=[os.path.join(
+                get_package_share_directory('prototype'),
+                'launch',
+                'ekf_config.yaml')],            
             remappings=[
-                ('/imu/data', '/raw_imu'),
+                ('/imu/data', '/imu/data_raw'),
                 ('/wheel_encoder_velocity', '/wheel_odometry')
             ]
         )
@@ -55,7 +59,11 @@ def generate_launch_description():
 
 
     #static transforms
-    config_file = os.path.join(os.path.dirname(__file__), 'static_tf.yaml')
+    config_file = os.path.join(
+        get_package_share_directory('prototype'),
+        'launch',
+        'static_tf.yaml')
+
     with open(config_file, 'r') as file:
         config = yaml.safe_load(file)
 
