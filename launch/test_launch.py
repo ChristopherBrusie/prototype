@@ -32,8 +32,10 @@ def generate_launch_description():
             output='screen',
             parameters=[{'use_sim_time': False},
                         {'use_mag': False},
-                        {'gain': 0.1},
                         {'remove_gravity_vector': True},
+                        {'publish_tf': False},
+                        {'gain':0.1},
+                        {'zeta: 0.0'},
                         ],
             remappings=[
                 ('/imu/data', '/imu/data_madgwick')
