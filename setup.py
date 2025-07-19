@@ -29,6 +29,7 @@ setup(
             'motor_driver_node = prototype.motor_driver_node:main',
             'teleop_twist_keyboard = prototype.teleop_twist_keyboard:main',
             'imu_node = prototype.imu_node:main',
+            'multi_static_tf_publisher = prototype.multi_static_tf_publisher:main',
         ],
     },
 )

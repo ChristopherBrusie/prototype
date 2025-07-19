@@ -9,7 +9,7 @@ import math
 
 
 class MutliStaticTFPublisher(Node):
-    def init(self):
+    def __init__(self):
         super().__init__('multi_static_tf_publisher')
         self.broadcaster = StaticTransformBroadcaster(self)
 
@@ -19,7 +19,7 @@ class MutliStaticTFPublisher(Node):
         transforms = []
         t1 = TransformStamped()
         t1.header.frame_id = 'base_link'
-        t1.header.child_frame_id = 'imu_link'
+        t1.child_frame_id = 'imu_link'
         t1.header.stamp = self.get_clock().now().to_msg()
         t1.transform.translation.x = 0.1
         t1.transform.translation.y = 0.1
@@ -33,7 +33,7 @@ class MutliStaticTFPublisher(Node):
 
         t2 = TransformStamped()
         t2.header.frame_id = 'base_link'
-        t2.header.child_frame_id = 'lidar_link'
+        t2.child_frame_id = 'laser'
         t2.header.stamp = self.get_clock().now().to_msg()
         t2.transform.translation.x = 0.0
         t2.transform.translation.y = 0.0

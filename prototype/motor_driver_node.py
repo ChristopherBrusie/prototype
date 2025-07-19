@@ -12,18 +12,21 @@ import math
 class MotorDriverNode(Node):
     def __init__(self):
         super().__init__('motor_driver_node')
-        self.get_logger().info('Motor Driver Node has been started.')
+        
 
         self.subscriber = self.create_subscription(Twist, 'cmd_vel', self.cmd_vel_callback, 10)
         self.odom_pub = self.create_publisher(TwistWithCovarianceStamped, 'wheel_odometry', 10)
 
 
         try:
-            self.ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
+            self.ser = serial.Serial('/dev/ttyUSB1', 115200, timeout=1)
+            self.get_logger().info('Serial port opened successfully.')
             time.sleep(2)
         except serial.SerialException as e:
             self.get_logger().error(f"Serial port error: {e}")
             self.ser = None
+
+        self.get_logger().info('Motor Driver Node has been started.')
 
         time.sleep(2)  # Wait for ESP32 to reset
 

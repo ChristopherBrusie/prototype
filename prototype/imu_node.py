@@ -46,7 +46,7 @@ class IMUNode(Node):
         # Read accelerometer data
         accel_x = self.read_raw_data(ACCEL_XOUT_H) / 16384.0 * 9.80665
         accel_y = self.read_raw_data(ACCEL_XOUT_H + 2) / 16384.0 * 9.80665
-        accel_z = self.read_raw_data(ACCEL_XOUT_H + 4) / 16384.0 * 9.80665
+        accel_z = (self.read_raw_data(ACCEL_XOUT_H + 4) / 16384.0 * 9.80665) - 1.8
         
         # Read gyroscope data
         gyro_x = self.read_raw_data(GYRO_XOUT_H) / 131.0 * 0.0174533

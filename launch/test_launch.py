@@ -20,16 +20,16 @@ def generate_launch_description():
             package='prototype',
             executable='multi_static_tf_publisher',
             name='multi_static_tf_publisher',
-            output='screen',
+            #output='screen',
             parameters=[{'use_sim_time': False}]
         ),
-        
+
         # IMU node
         Node(
             package='prototype',
             executable='imu_node',
             name='imu_node',
-            output='screen',
+            #output='screen',
             parameters=[{'use_sim_time': False}]
         ),
 
@@ -38,7 +38,7 @@ def generate_launch_description():
             package='imu_filter_madgwick',
             executable='imu_filter_madgwick_node',
             name='madgwick_filter',
-            output='screen',
+            #output='screen',
             parameters=[os.path.join(
                 get_package_share_directory('prototype'),
                 'launch',
